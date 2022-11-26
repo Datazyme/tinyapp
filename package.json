@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/Datazyme/tinyapp/issues"
   },
-  "homepage": "https://github.com/Datazyme/tinyapp#readme"
+  "homepage": "https://github.com/Datazyme/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
