@@ -4,7 +4,11 @@ const PORT = 8080;
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({extended: true}));
-function generateRandomString() {};
+
+//generates random 5 characters of letters and numbers
+let ranNum = function generateRandomString() {
+  return Math.random().toString(36).slice(2,8);
+};
 
 const urlDatabase = {
   "b2xVn2": "http://wwww.lighthouselabs.ca",
@@ -32,10 +36,10 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new")
 })
 
-//route takes in the user defined url and sends response "ok"
+//route takes in the user defined url and sends response of 6 random alphanumeric characters
 app.post("/urls", (req, res) => {
   console.log(req.body)
-  res.send("Ok");
+  res.send(ranNum());
 });
 
 //Found this in lecture to find longURL assign variable to re.params and then use urlDatabase to get key userInput 
