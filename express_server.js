@@ -25,6 +25,11 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars)
 })
 
+//route definition to add new long url and convert to short
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new")
+})
+
 //Found this in lecture to find longURL assign variable to re.params and then use urlDatabase to get key userInput 
 app.get("/urls/:id", (req, res) => {
   let userInput = req.params.id
