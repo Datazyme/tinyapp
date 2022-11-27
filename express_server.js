@@ -2,7 +2,9 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 
-app.set("view engine", "ejs")
+app.set("view engine", "ejs");
+app.use(express.urlencoded({extended: true}));
+function generateRandomString() {};
 
 const urlDatabase = {
   "b2xVn2": "http://wwww.lighthouselabs.ca",
@@ -30,6 +32,12 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new")
 })
 
+//route takes in the user defined url and sends response "ok"
+app.post("/urls", (req, res) => {
+  console.log(req.body)
+  res.send("Ok");
+});
+
 //Found this in lecture to find longURL assign variable to re.params and then use urlDatabase to get key userInput 
 app.get("/urls/:id", (req, res) => {
   let userInput = req.params.id
@@ -41,17 +49,6 @@ app.get("/urls/:id", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n")
 });
-
-// //returns a = 1;
-// app.get("/set", (req, res) => {
-//   const a = 1;
-//   res.send(`a = ${a}`);
-// });
-
-// //returns error because assigned in a differnt scope
-// app.get("/fetch", (req, res) => {
-//   res.send(`a = ${a}`)
-// })
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
