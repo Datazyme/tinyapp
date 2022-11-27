@@ -25,9 +25,10 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars)
 })
 
-//I don't know what goes after longUrl, at least this leaves the request blank
+//Found this in lecture to find longURL assign variable to re.params and then use urlDatabase to get key userInput 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id:req.params.id, longURL:urlDatabase.req};
+  let userInput = req.params.id
+  const templateVars = { id:userInput, longURL:urlDatabase[userInput]};
   res.render("urls_show", templateVars)
 })
 
