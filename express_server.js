@@ -19,21 +19,33 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+//index is in views and provides format to return the urlDatabase object
+app.get("/urls", (req, res) => {
+  const templateVars = {urls: urlDatabase};
+  res.render("urls_index", templateVars)
+})
+
+//I don't know what goes after longUrl, at least this leaves the request blank
+app.get("/urls/:id", (req, res) => {
+  const templateVars = { id:req.params.id, longURL:urlDatabase.req};
+  res.render("urls_show", templateVars)
+})
+
 //adding /hello at the end shows Hello world with World in bold
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n")
 });
 
-//returns a = 1;
-app.get("/set", (req, res) => {
-  const a = 1;
-  res.send(`a = ${a}`);
-});
+// //returns a = 1;
+// app.get("/set", (req, res) => {
+//   const a = 1;
+//   res.send(`a = ${a}`);
+// });
 
-//returns error because assigned in a differnt scope
-app.get("/fetch", (req, res) => {
-  res.send(`a = ${a}`)
-})
+// //returns error because assigned in a differnt scope
+// app.get("/fetch", (req, res) => {
+//   res.send(`a = ${a}`)
+// })
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
