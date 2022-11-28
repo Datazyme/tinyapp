@@ -49,6 +49,12 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${id}`);
 });
 
+//Allows user to delete urls by inluding entire short and long url object
+app.post("/urls/:id/delete", (req, res) => {
+  let id = req.params.id;
+  delete urlDatabase[id];
+  res.redirect('/urls');
+});
 
 //Found this in lecture to find longURL assign variable to re.params and then use urlDatabase to get key userInput 
 app.get("/urls/:id", (req, res) => {
@@ -64,7 +70,7 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
-
+//server is able to connect to client
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
