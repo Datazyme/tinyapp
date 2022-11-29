@@ -49,6 +49,15 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${id}`);
 });
 
+app.post("/urls/:myid", (req, res) => {
+  //get id, treat myid as variable and add it below
+  let id = req.params.myid;
+  //reassign id to new inputed url
+  let newURL = req.body;
+  urlDatabase[id] = newURL["longURL"]
+  res.redirect('/urls');
+});
+
 //Allows user to delete urls by inluding entire short and long url object
 app.post("/urls/:id/delete", (req, res) => {
   let id = req.params.id;
