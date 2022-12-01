@@ -5,6 +5,10 @@ const PORT = 8080;
 app.set("view engine", "ejs");
 app.use(express.urlencoded({extended: true}));
 
+//uses cookieParser
+const cookieParser = require('cookie-parser')
+app.use(cookieParser())
+
 //generates random 5 characters of letters and numbers
 let ranNum = function generateRandomString() {
   return Math.random().toString(36).slice(2,8);
@@ -15,9 +19,22 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+//can enter username and deposits cookie to track username
+app.post('/login', (req, res) => {
+  const user = req.body.username;
+  res.cookie('user', user)
+  res.redirect('/urls')
+})
+
+app.post('/logout', (req, res) => {
+  //clear the user cookie in this route
+  res.clearCookie('user')
+  res.redirect('/urls')
+})
+
 //root page says hello
 app.get("/", (req, res) => {
-  res.send("Hello");
+  res.redirect('/urls');
 });
 
 //adding /hello at the end shows Hello world with World in bold
@@ -30,15 +47,17 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-//index is in views and provides format to return the urlDatabase object
+//urls_index is rendered, displays the urlDatabase object, displays the username if entered via cookie
 app.get("/urls", (req, res) => {
-  const templateVars = {urls: urlDatabase};
+  const user = req.cookies["user"]
+  const templateVars = {urls: urlDatabase, user};
   res.render("urls_index", templateVars);
 })
 
-//route definition to add new long url and convert to short
+//route definition to add new long url and convert to short, displays username via cookie in templateVars
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {user: req.cookies["user"]}
+  res.render("urls_new", templateVars);
 })
 
 //route takes in the user defined url and sends response of 6 random alphanumeric characters
@@ -49,6 +68,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${id}`);
 });
 
+//reassigns id to imputed url
 app.post("/urls/:myid", (req, res) => {
   //get id, treat myid as variable and add it below
   let id = req.params.myid;
@@ -65,10 +85,10 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect('/urls');
 });
 
-//Found this in lecture to find longURL assign variable to re.params and then use urlDatabase to get key userInput 
+//Find longURL assign variable to req.params and then use urlDatabase to get key userInput
 app.get("/urls/:id", (req, res) => {
   let userInput = req.params.id;
-  const templateVars = { id:userInput, longURL:urlDatabase[userInput]};
+  const templateVars = { id:userInput, longURL:urlDatabase[userInput], user: req.cookies["user"]};
   res.render("urls_show", templateVars);
 });
 
