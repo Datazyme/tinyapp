@@ -33,12 +33,12 @@ const users = {
 };
 
 //renders the urls_registration page
-app.get('/register', (req, res) => {
+app.get('/registration', (req, res) => {
   const templateVars = {user: req.cookies["user"]}
-  res.render("urls_register", templateVars);
+  res.render("urls_registration", templateVars);
 });
 
-app.post('/register', (req, res) => {
+app.post('/registration', (req, res) => {
   const userID = ranNum();
   users[userID] = {
     userID,
