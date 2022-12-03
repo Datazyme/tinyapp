@@ -19,11 +19,37 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
 //renders the urls_registration page
-app.get("/registration", (req, res) => {
+app.get('/register', (req, res) => {
   const templateVars = {user: req.cookies["user"]}
-  res.render("urls_registration", templateVars);
+  res.render("urls_register", templateVars);
 });
+
+app.post('/register', (req, res) => {
+  const userID = ranNum();
+  users[userID] = {
+    userID,
+    email: req.body.email,
+    password: req.body.password
+  }
+  console.log(users[userID].userID)
+  console.log(users[userID])
+  cookie_id = res.cookie('users', users[userID].userID)
+  res.redirect('/urls')
+})
 
 //can enter username and deposits cookie to track username
 app.post('/login', (req, res) => {
