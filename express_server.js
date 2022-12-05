@@ -39,7 +39,7 @@ const users = {
 
 const getUserByEmail = function (email) {
   for (let user in users) {
-    console.log(users[user])
+    //console.log(users[user])
     if (users[user].email === email) {
       return true;
     }
@@ -57,9 +57,10 @@ app.post('/registration', (req, res) => {
   if(req.body.email === "" || req.body.password === "") {
     //console.log(users)
     res.status(400).send("email or password is empty")
-    res.redirect('/registration')
+    //res.redirect('/registration')
   } else if (getUserByEmail(req.body.email)) {
     res.status(400).send("user already exists")
+    //res.redirect('/urls')
 
   } else {
     users[userID] = {
@@ -67,9 +68,9 @@ app.post('/registration', (req, res) => {
       email: req.body.email,
       password: req.body.password
     }
-    console.log(userID) //checking what this is
+    //console.log(userID) //checking what this is
     const user = users[userID].userID
-    res.cookie('users', user)
+    res.cookie('user_id', user)
     res.redirect('/urls')
   }
   //console.log(user)
@@ -77,18 +78,43 @@ app.post('/registration', (req, res) => {
   //console.log(users[userID]) 
 })
 
+app.get('/login', (req, res) => {
+  const userID = req.cookies["user_id"]
+  const user = users[userID]
+  //console.log(user)
+  //users[userID] getting to work with templatevars
+  const templateVars = {user: user}
+  res.render("urls_login", templateVars);
+})
+
 //can enter username and deposits cookie to track username
 app.post('/login', (req, res) => {
-  //const user = Object.keys(users);
-  // console.log(user)
-  //res.cookie('users', user)
-  res.redirect('/registration')
+  const user = getUserByEmail(req.body.email)
+  //console.log(user.userID);
+  //in case of login check if email and password not empty, then check if user object is NOT undefined if !user show error, 
+  // then check if password matches password stored.
+  if(req.body.email === "" || req.body.password === "") {
+    //console.log(users)
+    res.status(400).send("email or password is empty")
+    //res.redirect('/registration')
+  // } else  {
+  //   //const usera = users[userID].userID
+  //   //const userID = req.cookies["user_id"]
+  //   //console.log(userID)
+  //   //res.cookie('user_id', user)
+  //   //res.redirect('/urls')
+  }
+  // res.cookie('user_id', user.userID)
+  res.redirect('/urls')
+  
+  // console.log(user)  
+  // console.log(users[userID]) 
 })
 
 app.post('/logout', (req, res) => {
   //clear the user cookie in this route
-  res.clearCookie('users')
-  res.redirect('/urls')
+  res.clearCookie('user_id')
+  res.redirect('/login')
 })
 
 //root page says hello
@@ -108,14 +134,15 @@ app.get("/urls.json", (req, res) => {
 
 //urls_index is rendered, displays the urlDatabase object, displays the username if entered via cookie
 app.get("/urls", (req, res) => {
-  const user = req.cookies["users"]
+  const user = users[req.cookies["user_id"]]
   const templateVars = {urls: urlDatabase, user};
   res.render("urls_index", templateVars);
 })
 
 //route definition to add new long url and convert to short, displays username via cookie in templateVars
 app.get("/urls/new", (req, res) => {
-  const templateVars = {user: req.cookies["users"]}
+  const user = users[req.cookies["user_id"]]
+  const templateVars = {user}
   res.render("urls_new", templateVars);
 })
 
@@ -146,8 +173,9 @@ app.post("/urls/:id/delete", (req, res) => {
 
 //Find longURL assign variable to req.params and then use urlDatabase to get key userInput
 app.get("/urls/:id", (req, res) => {
+  const user = users[req.cookies["user_id"]]
   let userInput = req.params.id;
-  const templateVars = { id:userInput, longURL:urlDatabase[userInput], user: req.cookies["user"]};
+  const templateVars = { id:userInput, longURL:urlDatabase[userInput], user};
   res.render("urls_show", templateVars);
 });
 
