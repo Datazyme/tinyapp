@@ -41,7 +41,7 @@ const getUserByEmail = function (email) {
   for (let user in users) {
     //console.log(users[user])
     if (users[user].email === email) {
-      return true;
+      return users[user];
     }
   }
 }
@@ -70,6 +70,7 @@ app.post('/registration', (req, res) => {
     }
     //console.log(userID) //checking what this is
     const user = users[userID].userID
+    //console.log(users[userID].email)
     res.cookie('user_id', user)
     res.redirect('/urls')
   }
@@ -90,22 +91,36 @@ app.get('/login', (req, res) => {
 //can enter username and deposits cookie to track username
 app.post('/login', (req, res) => {
   const user = getUserByEmail(req.body.email)
-  //console.log(user.userID);
+  const userID = user.userID;
+  console.log(userID);
   //in case of login check if email and password not empty, then check if user object is NOT undefined if !user show error, 
   // then check if password matches password stored.
   if(req.body.email === "" || req.body.password === "") {
     //console.log(users)
     res.status(400).send("email or password is empty")
     //res.redirect('/registration')
-  // } else  {
+  } else if (user.email === req.body.email && user.password === req.body.password) {
+    res.cookie('user_id', userID)
+    res.redirect('/urls')
+    //console.log(user);
+    //const userID = req.cookies["user_id"]
+  } else {
+    res.redirect('/login')
+  }
+    
+    //const user = users[user]
+    ///console.log(req.user)
+    //res.cookie('user_id', user)
+    //res.cookie('user_id', user)
+    //res.redirect('/urls')
   //   //const usera = users[userID].userID
   //   //const userID = req.cookies["user_id"]
   //   //console.log(userID)
   //   //res.cookie('user_id', user)
   //   //res.redirect('/urls')
-  }
+  //}
   // res.cookie('user_id', user.userID)
-  res.redirect('/urls')
+  
   
   // console.log(user)  
   // console.log(users[userID]) 
