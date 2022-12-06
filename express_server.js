@@ -37,9 +37,9 @@ const users = {
   }
 };
 
+//returns users object based on submitted email
 const getUserByEmail = function (email) {
   for (let user in users) {
-    //console.log(users[user])
     if (users[user].email === email) {
       return users[user];
     }
@@ -48,84 +48,58 @@ const getUserByEmail = function (email) {
 
 //renders the urls_registration page
 app.get('/registration', (req, res) => {
-  const templateVars = {user: req.cookies["user"]}
+  const templateVars = {user: req.cookies["user"]};
   res.render("urls_registration", templateVars);
 });
 
+//adds new user to object, generates random userID and sets cookie to userID
 app.post('/registration', (req, res) => {
   const userID = ranNum();
+  //checks if email and password are empty
   if(req.body.email === "" || req.body.password === "") {
-    //console.log(users)
-    res.status(400).send("email or password is empty")
-    //res.redirect('/registration')
-  } else if (getUserByEmail(req.body.email)) {
-    res.status(400).send("user already exists")
-    //res.redirect('/urls')
-
+    res.status(400).send("email or password is empty");
+    
+  } else if (getUserByEmail(req.body.email)) { //checks if registration exists
+    res.status(400).send("user already exists");
+    res.redirect('/urls');
   } else {
     users[userID] = {
       userID,
       email: req.body.email,
       password: req.body.password
     }
-    //console.log(userID) //checking what this is
-    const user = users[userID].userID
-    //console.log(users[userID].email)
-    res.cookie('user_id', user)
-    res.redirect('/urls')
+    const user = users[userID].userID;
+    res.cookie('user_id', user);
+    res.redirect('/urls');
   }
-  //console.log(user)
-  
-  //console.log(users[userID]) 
 })
 
+//renders login page
 app.get('/login', (req, res) => {
-  const userID = req.cookies["user_id"]
-  const user = users[userID]
-  //console.log(user)
-  //users[userID] getting to work with templatevars
-  const templateVars = {user: user}
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+  const templateVars = {user: user};
   res.render("urls_login", templateVars);
 })
 
 //can enter username and deposits cookie to track username
 app.post('/login', (req, res) => {
-  const user = getUserByEmail(req.body.email)
+  const user = getUserByEmail(req.body.email);
   const userID = user.userID;
   console.log(userID);
   //in case of login check if email and password not empty, then check if user object is NOT undefined if !user show error, 
   // then check if password matches password stored.
   if(req.body.email === "" || req.body.password === "") {
-    //console.log(users)
     res.status(400).send("email or password is empty")
-    //res.redirect('/registration')
   } else if (user.email === req.body.email && user.password === req.body.password) {
     res.cookie('user_id', userID)
     res.redirect('/urls')
-    //console.log(user);
-    //const userID = req.cookies["user_id"]
   } else {
-    res.redirect('/login')
+    res.status(403).send("User not found")
   }
-    
-    //const user = users[user]
-    ///console.log(req.user)
-    //res.cookie('user_id', user)
-    //res.cookie('user_id', user)
-    //res.redirect('/urls')
-  //   //const usera = users[userID].userID
-  //   //const userID = req.cookies["user_id"]
-  //   //console.log(userID)
-  //   //res.cookie('user_id', user)
-  //   //res.redirect('/urls')
-  //}
-  // res.cookie('user_id', user.userID)
-  
-  
-  // console.log(user)  
-  // console.log(users[userID]) 
 })
 
+//allows logout and removes cookie
 app.post('/logout', (req, res) => {
   //clear the user cookie in this route
   res.clearCookie('user_id')
