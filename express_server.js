@@ -48,8 +48,14 @@ const getUserByEmail = function (email) {
 
 //renders the urls_registration page
 app.get('/registration', (req, res) => {
-  const templateVars = {user: req.cookies["user"]};
-  res.render("urls_registration", templateVars);
+  const user = getUserByEmail(req.body.email);
+  if (user === undefined) {
+    const templateVars = {user: req.cookies["user"]};
+    res.render("urls_registration", templateVars);
+  } else if (req.cookies["user_id"]) {
+
+    res.redirect('/urls');
+  }
 });
 
 //adds new user to object, generates random userID and sets cookie to userID
@@ -60,7 +66,7 @@ app.post('/registration', (req, res) => {
     res.status(400).send("email or password is empty");
     
   } else if (getUserByEmail(req.body.email)) { //checks if registration exists
-    res.status(400).send("user already exists");
+    //res.status(400).send("user already exists");
     res.redirect('/urls');
   } else {
     users[userID] = {
@@ -76,17 +82,20 @@ app.post('/registration', (req, res) => {
 
 //renders login page
 app.get('/login', (req, res) => {
-  const userID = req.cookies["user_id"];
-  const user = users[userID];
-  const templateVars = {user: user};
-  res.render("urls_login", templateVars);
+  if (req.cookies["user_id"]) {
+    res.redirect('/urls')
+  } else {
+    const userID = req.cookies["user_id"];
+    const user = users[userID];
+    const templateVars = {user: user};
+    res.render("urls_login", templateVars);
+  }
 })
 
 //can enter username and deposits cookie to track username
 app.post('/login', (req, res) => {
   const user = getUserByEmail(req.body.email);
   const userID = user.userID;
-  console.log(userID);
   //in case of login check if email and password not empty, then check if user object is NOT undefined if !user show error, 
   // then check if password matches password stored.
   if(req.body.email === "" || req.body.password === "") {
