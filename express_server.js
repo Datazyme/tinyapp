@@ -139,17 +139,25 @@ app.get("/urls", (req, res) => {
 
 //route definition to add new long url and convert to short, displays username via cookie in templateVars
 app.get("/urls/new", (req, res) => {
-  const user = users[req.cookies["user_id"]]
-  const templateVars = {user}
-  res.render("urls_new", templateVars);
+  if(req.cookies["user_id"]) {
+    const user = users[req.cookies["user_id"]]
+    const templateVars = {user}
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect('/login')
+  }
 })
 
 //route takes in the user defined url and sends response of 6 random alphanumeric characters
 app.post("/urls", (req, res) => {
-  let newLong = req.body;
-  let id = ranNum();
-  urlDatabase[id] = newLong["longURL"];
-  res.redirect(`/urls/${id}`);
+  if (req.cookies["user_id"]) {
+    let newLong = req.body;
+    let id = ranNum();
+    urlDatabase[id] = newLong["longURL"];
+    res.redirect(`/urls/${id}`);
+  } else {
+    res.redirect('/login')
+  }
 });
 
 //reassigns id to imputed url
