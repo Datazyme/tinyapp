@@ -140,15 +140,24 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const user = users[req.cookies["user_id"]]
   const templateVars = {user}
-  res.render("urls_new", templateVars);
+  if (!user) {
+    res.redirect('/login');
+  } else {
+    res.render("urls_new", templateVars);
+  } 
 })
 
 //route takes in the user defined url and sends response of 6 random alphanumeric characters
 app.post("/urls", (req, res) => {
+  const user = users[req.cookies["user_id"]]
   let newLong = req.body;
   let id = ranNum();
-  urlDatabase[id] = newLong["longURL"];
-  res.redirect(`/urls/${id}`);
+  if (!user) {
+    res.status(403).send("not logged in")
+  } else {
+    urlDatabase[id] = newLong["longURL"];
+    res.redirect(`/urls/${id}`);
+  }
 });
 
 //reassigns id to imputed url
@@ -180,7 +189,7 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   let userInput = req.params.id;
   const longURL = urlDatabase[userInput]
-  res.redirect(longURL);
+  res.redirect(longURL); 
 });
 
 //server is able to connect to client
