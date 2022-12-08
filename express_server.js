@@ -2,13 +2,19 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
+const bycrypt = require("bycryptjs");
+const cookieSession = require('cookie-session');
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({extended: true}));
 
 //uses cookieParser
-const cookieParser = require('cookie-parser')
-app.use(cookieParser())
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2'],
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
 
 
 //***helper functions
@@ -72,7 +78,7 @@ app.post('/registration', (req, res) => {
     users[userID] = {
       userID,
       email: req.body.email,
-      password: req.body.password
+      password: bycrypt.hashSync(req.body.password, 10)
     }
     const user = users[userID].userID;
     res.cookie('user_id', user);
