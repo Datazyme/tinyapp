@@ -189,7 +189,11 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   let userInput = req.params.id;
   const longURL = urlDatabase[userInput]
-  res.redirect(longURL); 
+  if (!longURL) {
+    res.status(403).send("no long url")
+  } else {
+    res.redirect(longURL); 
+  }  
 });
 
 //server is able to connect to client
