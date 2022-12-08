@@ -2,19 +2,13 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
-const bycrypt = require("bycryptjs");
-const cookieSession = require('cookie-session');
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({extended: true}));
 
 //uses cookieParser
-app.use(cookieSession({
-  name: 'session',
-  keys: ['key1', 'key2'],
-  // Cookie Options
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}));
+const cookieParser = require('cookie-parser')
+app.use(cookieParser())
 
 
 //***helper functions
@@ -54,13 +48,11 @@ const getUserByEmail = function (email) {
 
 //renders the urls_registration page
 app.get('/registration', (req, res) => {
-  const user = getUserByEmail(req.body.email);
-  if (user === undefined) {
+  if (req.cookies["user_id"]) {
+    res.redirect('/urls');
+  } else {
     const templateVars = {user: req.cookies["user"]};
     res.render("urls_registration", templateVars);
-  } else if (req.cookies["user_id"]) {
-
-    res.redirect('/urls');
   }
 });
 
@@ -72,13 +64,13 @@ app.post('/registration', (req, res) => {
     res.status(400).send("email or password is empty");
     
   } else if (getUserByEmail(req.body.email)) { //checks if registration exists
-    //res.status(400).send("user already exists");
+    res.status(400).send("user already exists");
     res.redirect('/urls');
   } else {
     users[userID] = {
       userID,
       email: req.body.email,
-      password: bycrypt.hashSync(req.body.password, 10)
+      password: req.body.password
     }
     const user = users[userID].userID;
     res.cookie('user_id', user);
@@ -88,11 +80,11 @@ app.post('/registration', (req, res) => {
 
 //renders login page
 app.get('/login', (req, res) => {
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
   if (req.cookies["user_id"]) {
     res.redirect('/urls')
   } else {
-    const userID = req.cookies["user_id"];
-    const user = users[userID];
     const templateVars = {user: user};
     res.render("urls_login", templateVars);
   }
@@ -102,6 +94,7 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   const user = getUserByEmail(req.body.email);
   const userID = user.userID;
+  console.log(userID);
   //in case of login check if email and password not empty, then check if user object is NOT undefined if !user show error, 
   // then check if password matches password stored.
   if(req.body.email === "" || req.body.password === "") {
@@ -145,25 +138,17 @@ app.get("/urls", (req, res) => {
 
 //route definition to add new long url and convert to short, displays username via cookie in templateVars
 app.get("/urls/new", (req, res) => {
-  if(req.cookies["user_id"]) {
-    const user = users[req.cookies["user_id"]]
-    const templateVars = {user}
-    res.render("urls_new", templateVars);
-  } else {
-    res.redirect('/login')
-  }
+  const user = users[req.cookies["user_id"]]
+  const templateVars = {user}
+  res.render("urls_new", templateVars);
 })
 
 //route takes in the user defined url and sends response of 6 random alphanumeric characters
 app.post("/urls", (req, res) => {
-  if (req.cookies["user_id"]) {
-    let newLong = req.body;
-    let id = ranNum();
-    urlDatabase[id] = newLong["longURL"];
-    res.redirect(`/urls/${id}`);
-  } else {
-    res.redirect('/login')
-  }
+  let newLong = req.body;
+  let id = ranNum();
+  urlDatabase[id] = newLong["longURL"];
+  res.redirect(`/urls/${id}`);
 });
 
 //reassigns id to imputed url
@@ -202,4 +187,3 @@ app.get("/u/:id", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-//test
