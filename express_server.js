@@ -63,6 +63,10 @@ let urlsForUser = function (urlDatabase, userID) {
   return result;
 }
 
+let hashedPassword = bcrypt.hashSync("password", 10);
+
+
+
 //userURL(urlDatabase)
 //renders the urls_registration page
 app.get('/registration', (req, res) => {
@@ -84,11 +88,11 @@ app.post('/registration', (req, res) => {
     users[userID] = {
       userID,
       email: req.body.email,
-      password: req.body.password
+      password: hashedPassword
     }
     const user = users[userID].userID;
     res.cookie('user_id', user);
-    console.log(user)
+    console.log(users[userID].password)
     return res.redirect('/urls');
   }
 })
@@ -110,15 +114,17 @@ app.post('/login', (req, res) => {
   const user = getUserByEmail(req.body.email);
   const userID = user.userID;
   console.log(userID);
+  const passwordCheck = bcrypt.compareSync("password", hashedPassword);
+  console.log(passwordCheck)
   //in case of login check if email and password not empty, then check if user object is NOT undefined if !user show error, 
   // then check if password matches password stored.
   if(req.body.email === "" || req.body.password === "") {
-    res.status(400).send("email or password is empty")
-  } else if (user.email === req.body.email && user.password === req.body.password) {
+    return res.status(400).send("email or password is empty")
+  } else if (user.email === req.body.email && passwordCheck === true) {
     res.cookie('user_id', userID)
     res.redirect('/urls')
   } else {
-    res.status(403).send("User not found")
+    return res.status(403).send("User not found")
   }
 })
 
