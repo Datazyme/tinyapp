@@ -2,6 +2,7 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
+const bcrypt = require("bcryptjs");
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({extended: true}));
@@ -34,12 +35,12 @@ const users = {
   'userRandomID': {
     id: "userRandomID",
     email: 'user@example.com',
-    password: 'purple-monkey-dinosaur'
+    password: bcrypt.hashSync("password", 10)
   },
   'user2RandomID': {
     id: 'user2RandomID',
     email: 'user2@example.com',
-    password: 'dishwasher-funk'
+    password: bcrypt.hashSync("password1", 10)
   }
 };
 
@@ -185,11 +186,11 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls", (req, res) => {
   const userID = req.cookies["user_id"]
   if (!userID) {
-    return res.status(403).send("not logged in")
+    return res.status(403).send("no such userID")
   }
   const user = users[userID]
   if (!user) {
-    return res.status(403).send("not logged in")
+    return res.status(403).send("User is not logged in")
   }
   let newLong = req.body.longURL;
   let id = ranNum();
@@ -205,6 +206,14 @@ app.post("/urls/:myid", (req, res) => {
   let id = req.params.myid;
   //reassign id to new inputed url
   let newURL = req.body;
+  const userID = req.cookies["user_id"]
+  if (!userID) {
+    return res.status(403).send("ID does not exist")
+  }
+  const user = users[userID]
+  if (!user) {
+    return res.status(403).send("User not logged in")
+  }
   console.log(urlDatabase[id])
   urlDatabase[id].longURL = newURL["longURL"]
   res.redirect('/urls');
@@ -213,13 +222,28 @@ app.post("/urls/:myid", (req, res) => {
 //Allows user to delete urls by inluding entire short and long url object
 app.post("/urls/:id/delete", (req, res) => {
   let id = req.params.id;
+  const userID = req.cookies["user_id"]
+  if (!userID) {
+    return res.status(403).send("ID does not exist")
+  }
+  const user = users[userID]
+  if (!user) {
+    return res.status(403).send("User not logged in")
+  }
   delete urlDatabase[id];
   res.redirect('/urls');
 });
 
 //Find longURL assign variable to req.params and then use urlDatabase to get key userInput
 app.get("/urls/:id", (req, res) => {
-  const user = users[req.cookies["user_id"]]
+  const userID = req.cookies["user_id"]
+  if (!userID) {
+    return res.status(403).send("ID does not exist")
+  }
+  const user = users[userID]
+  if (!user) {
+    return res.status(403).send("User not logged in")
+  }
   let userInput = req.params.id;
   const templateVars = { id:userInput, longURL:urlDatabase[userInput], user};
   res.render("urls_show", templateVars);
