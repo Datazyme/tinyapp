@@ -20,8 +20,14 @@ let ranNum = function generateRandomString() {
 
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 const users = {
@@ -46,14 +52,21 @@ const getUserByEmail = function (email) {
   }
 }
 
+let urlsForUser = function (urlDatabase, userID) {
+  const result = {}
+  for (let url in urlDatabase) {
+    if (urlDatabase[url].userID === userID) {
+      result[url] = urlDatabase[url]
+    }//le.log(urlDatabase[url].userID)
+  }
+  return result;
+}
+
+//userURL(urlDatabase)
 //renders the urls_registration page
 app.get('/registration', (req, res) => {
-  if (req.cookies["user_id"]) {
-    res.redirect('/urls');
-  } else {
-    const templateVars = {user: req.cookies["user"]};
-    res.render("urls_registration", templateVars);
-  }
+  const templateVars = {user: req.cookies["user"]};
+  res.render("urls_registration", templateVars);  
 });
 
 //adds new user to object, generates random userID and sets cookie to userID
@@ -61,11 +74,11 @@ app.post('/registration', (req, res) => {
   const userID = ranNum();
   //checks if email and password are empty
   if(req.body.email === "" || req.body.password === "") {
-    res.status(400).send("email or password is empty");
+    return res.status(400).send("email or password is empty");
     
   } else if (getUserByEmail(req.body.email)) { //checks if registration exists
-    res.status(400).send("user already exists");
-    res.redirect('/urls');
+    return res.status(400).send("user already exists");
+    //res.redirect('/urls');
   } else {
     users[userID] = {
       userID,
@@ -74,7 +87,8 @@ app.post('/registration', (req, res) => {
     }
     const user = users[userID].userID;
     res.cookie('user_id', user);
-    res.redirect('/urls');
+    console.log(user)
+    return res.redirect('/urls');
   }
 })
 
@@ -131,9 +145,29 @@ app.get("/urls.json", (req, res) => {
 
 //urls_index is rendered, displays the urlDatabase object, displays the username if entered via cookie
 app.get("/urls", (req, res) => {
-  const user = users[req.cookies["user_id"]]
-  const templateVars = {urls: urlDatabase, user};
-  res.render("urls_index", templateVars);
+  const userID = req.cookies["user_id"]
+  if (!userID) {
+    return res.status(403).send("not logged in")
+  }
+  const user = users[userID]
+  if (!user) {
+    return res.status(403).send("not logged in")
+  }
+
+  const urls = urlsForUser(urlDatabase, userID)
+  console.log("++++++", urls)
+  const templateVars = {urls, user};
+  return res.render("urls_index", templateVars);
+
+  // for (let url in urlDatabase) {
+  //   if (urlDatabase[url].userID == req.cookies["user_id"]) {
+  //     const templateVars = {urls: urlDatabase[url], user};
+  //     return res.render("urls_index", templateVars);
+  //   } else {
+  //     templateVars = {user, urls: ""}
+  //     return res.render("urls_index", templateVars);
+  //   }
+  // }
 })
 
 //route definition to add new long url and convert to short, displays username via cookie in templateVars
@@ -149,15 +183,20 @@ app.get("/urls/new", (req, res) => {
 
 //route takes in the user defined url and sends response of 6 random alphanumeric characters
 app.post("/urls", (req, res) => {
-  const user = users[req.cookies["user_id"]]
-  let newLong = req.body;
-  let id = ranNum();
-  if (!user) {
-    res.status(403).send("not logged in")
-  } else {
-    urlDatabase[id] = newLong["longURL"];
-    res.redirect(`/urls/${id}`);
+  const userID = req.cookies["user_id"]
+  if (!userID) {
+    return res.status(403).send("not logged in")
   }
+  const user = users[userID]
+  if (!user) {
+    return res.status(403).send("not logged in")
+  }
+  let newLong = req.body.longURL;
+  let id = ranNum();
+
+  urlDatabase[id] = { longURL: newLong, userID };
+  console.log(urlDatabase)
+  return res.redirect(`/urls`);
 });
 
 //reassigns id to imputed url
@@ -166,7 +205,8 @@ app.post("/urls/:myid", (req, res) => {
   let id = req.params.myid;
   //reassign id to new inputed url
   let newURL = req.body;
-  urlDatabase[id] = newURL["longURL"]
+  console.log(urlDatabase[id])
+  urlDatabase[id].longURL = newURL["longURL"]
   res.redirect('/urls');
 });
 
