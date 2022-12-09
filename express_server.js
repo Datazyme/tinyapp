@@ -3,13 +3,22 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 const bcrypt = require("bcryptjs");
+const cookieSession = require('cookie-session');
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ["key1", "key2"],
+
+    // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({extended: true}));
 
 //uses cookieParser
-const cookieParser = require('cookie-parser')
-app.use(cookieParser())
+// const cookieParser = require('cookie-parser')
+// app.use(cookieParser())
 
 
 //***helper functions
@@ -53,9 +62,9 @@ const getUserByEmail = function (email) {
   }
 }
 
-let urlsForUser = function (urlDatabase, userID) {
+const urlsForUser = function (urlDatabase, userID) {
   const result = {}
-  for (let url in urlDatabase) {
+  for (const url in urlDatabase) {
     if (urlDatabase[url].userID === userID) {
       result[url] = urlDatabase[url]
     }//le.log(urlDatabase[url].userID)
@@ -63,14 +72,14 @@ let urlsForUser = function (urlDatabase, userID) {
   return result;
 }
 
-let hashedPassword = bcrypt.hashSync("password", 10);
+const hashedPassword = bcrypt.hashSync("password", 10);
 
 
 
 //userURL(urlDatabase)
 //renders the urls_registration page
 app.get('/registration', (req, res) => {
-  const templateVars = {user: req.cookies["user"]};
+  const templateVars = {user: req.session.user_id};
   res.render("urls_registration", templateVars);  
 });
 
@@ -88,20 +97,19 @@ app.post('/registration', (req, res) => {
     users[userID] = {
       userID,
       email: req.body.email,
-      password: hashedPassword
+      password: bcrypt.hashSync(req.body.password, 10)
     }
-    const user = users[userID].userID;
-    res.cookie('user_id', user);
-    console.log(users[userID].password)
+    req.session.user_id = userID;
+    //console.log(user)
+    //console.log(users[userID].password)
     return res.redirect('/urls');
   }
 })
 
 //renders login page
 app.get('/login', (req, res) => {
-  const userID = req.cookies["user_id"];
-  const user = users[userID];
-  if (req.cookies["user_id"]) {
+  const user = users[req.session.user_id]
+  if (req.session.user_id) {
     res.redirect('/urls')
   } else {
     const templateVars = {user: user};
@@ -111,27 +119,31 @@ app.get('/login', (req, res) => {
 
 //can enter username and deposits cookie to track username
 app.post('/login', (req, res) => {
-  const user = getUserByEmail(req.body.email);
+  if(req.body.email === "" || req.body.password === "") {
+    return res.status(400).send("email or password is empty")
+  }
+  const enteredPassword = req.body.password
+  const enteredEmail = req.body.email
+  const user = getUserByEmail(enteredEmail);
+  console.log('user', user)
   const userID = user.userID;
   console.log(userID);
-  const passwordCheck = bcrypt.compareSync("password", hashedPassword);
+  const passwordCheck = bcrypt.compareSync(enteredPassword, user.password);
   console.log(passwordCheck)
   //in case of login check if email and password not empty, then check if user object is NOT undefined if !user show error, 
   // then check if password matches password stored.
-  if(req.body.email === "" || req.body.password === "") {
-    return res.status(400).send("email or password is empty")
-  } else if (user.email === req.body.email && passwordCheck === true) {
-    res.cookie('user_id', userID)
+  if (user.email === enteredEmail && passwordCheck) {
+    req.session.user_id = userID
     res.redirect('/urls')
   } else {
-    return res.status(403).send("User not found")
+    return res.status(403).send("User not found in post/login")
   }
 })
 
 //allows logout and removes cookie
 app.post('/logout', (req, res) => {
   //clear the user cookie in this route
-  res.clearCookie('user_id')
+  req.session = null
   res.redirect('/login')
 })
 
@@ -152,16 +164,17 @@ app.get("/urls.json", (req, res) => {
 
 //urls_index is rendered, displays the urlDatabase object, displays the username if entered via cookie
 app.get("/urls", (req, res) => {
-  const userID = req.cookies["user_id"]
-  if (!userID) {
-    return res.status(403).send("not logged in")
+  console.log(req.session.user_id)
+  if (!req.session.user_id) {
+    return res.status(403).send("no userID in get/urls")
   }
-  const user = users[userID]
+  const user = users[req.session.user_id]
+  console.log(user + "here")
   if (!user) {
-    return res.status(403).send("not logged in")
+    return res.status(403).send("no user in get/urls")
   }
 
-  const urls = urlsForUser(urlDatabase, userID)
+  const urls = urlsForUser(urlDatabase, user.id)
   console.log("++++++", urls)
   const templateVars = {urls, user};
   return res.render("urls_index", templateVars);
@@ -179,7 +192,7 @@ app.get("/urls", (req, res) => {
 
 //route definition to add new long url and convert to short, displays username via cookie in templateVars
 app.get("/urls/new", (req, res) => {
-  const user = users[req.cookies["user_id"]]
+  const user = users[req.session.user_id];
   const templateVars = {user}
   if (!user) {
     res.redirect('/login');
@@ -189,19 +202,18 @@ app.get("/urls/new", (req, res) => {
 })
 
 //route takes in the user defined url and sends response of 6 random alphanumeric characters
-app.post("/urls", (req, res) => {
-  const userID = req.cookies["user_id"]
-  if (!userID) {
-    return res.status(403).send("no such userID")
+app.post("/urls", (req, res) => { 
+  if (!req.session.user_id) {
+    return res.status(403).send("no such userID in post/urls")
   }
-  const user = users[userID]
+  const user = users[req.session.user_id]
   if (!user) {
-    return res.status(403).send("User is not logged in")
+    return res.status(403).send("User is not logged in post/urls")
   }
   let newLong = req.body.longURL;
   let id = ranNum();
 
-  urlDatabase[id] = { longURL: newLong, userID };
+  urlDatabase[id] = { longURL: newLong, user };
   console.log(urlDatabase)
   return res.redirect(`/urls`);
 });
@@ -212,13 +224,12 @@ app.post("/urls/:myid", (req, res) => {
   let id = req.params.myid;
   //reassign id to new inputed url
   let newURL = req.body;
-  const userID = req.cookies["user_id"]
-  if (!userID) {
-    return res.status(403).send("ID does not exist")
+  if (!req.session.user_id) {
+    return res.status(403).send("ID does not exist in myid")
   }
-  const user = users[userID]
+  const user = users[req.session.user_id]
   if (!user) {
-    return res.status(403).send("User not logged in")
+    return res.status(403).send("User not logged in myid")
   }
   console.log(urlDatabase[id])
   urlDatabase[id].longURL = newURL["longURL"]
@@ -228,13 +239,12 @@ app.post("/urls/:myid", (req, res) => {
 //Allows user to delete urls by inluding entire short and long url object
 app.post("/urls/:id/delete", (req, res) => {
   let id = req.params.id;
-  const userID = req.cookies["user_id"]
-  if (!userID) {
-    return res.status(403).send("ID does not exist")
+  if (!req.session.user_id) {
+    return res.status(403).send("ID does not exist in id/delete")
   }
-  const user = users[userID]
+  const user = users[req.session.user_id]
   if (!user) {
-    return res.status(403).send("User not logged in")
+    return res.status(403).send("User not logged in id/delete")
   }
   delete urlDatabase[id];
   res.redirect('/urls');
@@ -242,13 +252,12 @@ app.post("/urls/:id/delete", (req, res) => {
 
 //Find longURL assign variable to req.params and then use urlDatabase to get key userInput
 app.get("/urls/:id", (req, res) => {
-  const userID = req.cookies["user_id"]
-  if (!userID) {
-    return res.status(403).send("ID does not exist")
+  if (!req.session.user_id) {
+    return res.status(403).send("ID does not exist in urls/:id")
   }
-  const user = users[userID]
+  const user = users[req.session.user_id]
   if (!user) {
-    return res.status(403).send("User not logged in")
+    return res.status(403).send("User not logged in urls/:id")
   }
   let userInput = req.params.id;
   const templateVars = { id:userInput, longURL:urlDatabase[userInput], user};
@@ -260,7 +269,7 @@ app.get("/u/:id", (req, res) => {
   let userInput = req.params.id;
   const longURL = urlDatabase[userInput]
   if (!longURL) {
-    res.status(403).send("no long url")
+    res.status(403).send("no long url in u/:id")
   } else {
     res.redirect(longURL); 
   }  
