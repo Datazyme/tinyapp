@@ -16,6 +16,7 @@ app.use(cookieSession({
 app.set("view engine", "ejs");
 app.use(express.urlencoded({extended: true}));
 
+//imports helper functions
 const {
   getUserByEmail,
   ranNum,
@@ -47,11 +48,7 @@ const users = {
   }
 };
 
-const hashedPassword = bcrypt.hashSync("password", 10);
 
-
-
-//userURL(urlDatabase)
 //renders the urls_registration page
 app.get('/registration', (req, res) => {
   const templateVars = {user: req.session.user_id};
@@ -64,19 +61,17 @@ app.post('/registration', (req, res) => {
   //checks if email and password are empty
   if(req.body.email === "" || req.body.password === "") {
     return res.status(400).send("email or password is empty");
-    
+
   } else if (getUserByEmail(req.body.email, users)) { //checks if registration exists
-    return res.status(400).send("user already exists");
-    
-  } else {
+    return res.status(400).send("This user already exists");
+  //registers user
+  } else { 
     users[userID] = {
       userID,
       email: req.body.email,
       password: bcrypt.hashSync(req.body.password, 10)
     }
-    req.session.user_id = userID;
-    //console.log(user)
-    //console.log(users[userID].password)
+    req.session.user_id = userID; //sets cookie
     return res.redirect('/urls');
   }
 })
@@ -92,26 +87,19 @@ app.get('/login', (req, res) => {
   }
 })
 
-//can enter username and deposits cookie to track username
-
-//can enter username and deposits cookie to track username
+//can enter email and deposits cookie to track username
 app.post('/login', (req, res) => {
+  //in case of login check if email and password not empty, then check if user object is NOT undefined if !user show error,
   if(req.body.email === "" || req.body.password === "") {
     return res.status(400).send("email or password is empty")
   }
-  const enteredPassword = req.body.password
+  const enteredPassword = req.body.password 
   const enteredEmail = req.body.email
-  const user = getUserByEmail(enteredEmail, users);
-  console.log('user', user)
-  const userID = user.userID;
-  //console.log(userID);
+  const user = getUserByEmail(enteredEmail, users); //gets users id from entered email compare to users object
+  //console.log('user', user)
   const passwordCheck = bcrypt.compareSync(enteredPassword, users[user].password);
-  console.log(users[user].password)
-  console.log(passwordCheck)
-
-  //in case of login check if email and password not empty, then check if user object is NOT undefined if !user show error, 
   // then check if password matches password stored.
-  if (users[user].email === enteredEmail && passwordCheck === true) {
+  if (users[user].email === enteredEmail && passwordCheck) {
     req.session.user_id = user
     res.redirect('/urls')
   } else {
@@ -143,30 +131,19 @@ app.get("/urls.json", (req, res) => {
 
 //urls_index is rendered, displays the urlDatabase object, displays the username if entered via cookie
 app.get("/urls", (req, res) => {
-  //console.log(req.session.user_id)
+  //checks if user is logged in
   if (!req.session.user_id) {
-    return res.status(403).send("no userID in get/urls")
+    return res.status(403).send("The user is not logged in")
   }
+  //checks if user exists
   const user = users[req.session.user_id]
-  ///console.log(user + "here")
-  if (user === null) {
-    return res.status(403).send("no user in get/urls")
+  if (!user) {
+    return res.status(403).send("no such user")
   }
-
+  //displays urls in urldatabase of user
   const urls = urlsForUser(urlDatabase, user.id)
-  //console.log("++++++", urls)
   const templateVars = {urls, user};
   return res.render("urls_index", templateVars);
-
-  // for (let url in urlDatabase) {
-  //   if (urlDatabase[url].userID == req.cookies["user_id"]) {
-  //     const templateVars = {urls: urlDatabase[url], user};
-  //     return res.render("urls_index", templateVars);
-  //   } else {
-  //     templateVars = {user, urls: ""}
-  //     return res.render("urls_index", templateVars);
-  //   }
-  // }
 })
 
 //route definition to add new long url and convert to short, displays username via cookie in templateVars
@@ -180,14 +157,16 @@ app.get("/urls/new", (req, res) => {
   } 
 })
 
-//route takes in the user defined url and sends response of 6 random alphanumeric characters
-app.post("/urls", (req, res) => { 
+//allows user to post a new long url and generates a short url for it
+app.post("/urls", (req, res) => {
+  //checks if user is logged in 
   if (!req.session.user_id) {
-    return res.status(403).send("no such userID in post/urls")
+    return res.status(403).send("no such userID")
   }
+  //checks if user is logged in
   const user = users[req.session.user_id]
   if (!user) {
-    return res.status(403).send("User is not logged in post/urls")
+    return res.status(403).send("User is not logged in")
   }
   let newLong = req.body.longURL;
   let id = ranNum();
