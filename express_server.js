@@ -16,17 +16,11 @@ app.use(cookieSession({
 app.set("view engine", "ejs");
 app.use(express.urlencoded({extended: true}));
 
-//uses cookieParser
-// const cookieParser = require('cookie-parser')
-// app.use(cookieParser())
-
-
-//***helper functions
-
-//generates random 5 characters of letters and numbers
-let ranNum = function generateRandomString() {
-  return Math.random().toString(36).slice(2,8);
-};
+const {
+  getUserByEmail,
+  ranNum,
+  urlsForUser,
+} = require("./helpers");
 
 
 const urlDatabase = {
@@ -52,25 +46,6 @@ const users = {
     password: bcrypt.hashSync("password1", 10)
   }
 };
-
-//returns users object based on submitted email
-const getUserByEmail = function (email) {
-  for (let user in users) {
-    if (users[user].email === email) {
-      return users[user];
-    }
-  }
-}
-
-const urlsForUser = function (urlDatabase, userID) {
-  const result = {}
-  for (const url in urlDatabase) {
-    if (urlDatabase[url].userID === userID) {
-      result[url] = urlDatabase[url]
-    }//le.log(urlDatabase[url].userID)
-  }
-  return result;
-}
 
 const hashedPassword = bcrypt.hashSync("password", 10);
 
@@ -118,13 +93,15 @@ app.get('/login', (req, res) => {
 })
 
 //can enter username and deposits cookie to track username
+
+//can enter username and deposits cookie to track username
 app.post('/login', (req, res) => {
   if(req.body.email === "" || req.body.password === "") {
     return res.status(400).send("email or password is empty")
   }
   const enteredPassword = req.body.password
   const enteredEmail = req.body.email
-  const user = getUserByEmail(enteredEmail);
+  const user = getUserByEmail(enteredEmail, users);
   console.log('user', user)
   const userID = user.userID;
   console.log(userID);
@@ -170,12 +147,12 @@ app.get("/urls", (req, res) => {
   }
   const user = users[req.session.user_id]
   console.log(user + "here")
-  if (!user) {
+  if (user === null) {
     return res.status(403).send("no user in get/urls")
   }
 
   const urls = urlsForUser(urlDatabase, user.id)
-  console.log("++++++", urls)
+  //console.log("++++++", urls)
   const templateVars = {urls, user};
   return res.render("urls_index", templateVars);
 
@@ -214,7 +191,7 @@ app.post("/urls", (req, res) => {
   let id = ranNum();
 
   urlDatabase[id] = { longURL: newLong, user };
-  console.log(urlDatabase)
+  //console.log(urlDatabase)
   return res.redirect(`/urls`);
 });
 
@@ -231,7 +208,7 @@ app.post("/urls/:myid", (req, res) => {
   if (!user) {
     return res.status(403).send("User not logged in myid")
   }
-  console.log(urlDatabase[id])
+  //.log(urlDatabase[id])
   urlDatabase[id].longURL = newURL["longURL"]
   res.redirect('/urls');
 });
