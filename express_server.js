@@ -65,9 +65,9 @@ app.post('/registration', (req, res) => {
   if(req.body.email === "" || req.body.password === "") {
     return res.status(400).send("email or password is empty");
     
-  } else if (getUserByEmail(req.body.email)) { //checks if registration exists
+  } else if (getUserByEmail(req.body.email, users)) { //checks if registration exists
     return res.status(400).send("user already exists");
-    //res.redirect('/urls');
+    
   } else {
     users[userID] = {
       userID,
@@ -104,13 +104,15 @@ app.post('/login', (req, res) => {
   const user = getUserByEmail(enteredEmail, users);
   console.log('user', user)
   const userID = user.userID;
-  console.log(userID);
-  const passwordCheck = bcrypt.compareSync(enteredPassword, user.password);
+  //console.log(userID);
+  const passwordCheck = bcrypt.compareSync(enteredPassword, users[user].password);
+  console.log(users[user].password)
   console.log(passwordCheck)
+
   //in case of login check if email and password not empty, then check if user object is NOT undefined if !user show error, 
   // then check if password matches password stored.
-  if (user.email === enteredEmail && passwordCheck) {
-    req.session.user_id = userID
+  if (users[user].email === enteredEmail && passwordCheck === true) {
+    req.session.user_id = user
     res.redirect('/urls')
   } else {
     return res.status(403).send("User not found in post/login")
@@ -141,12 +143,12 @@ app.get("/urls.json", (req, res) => {
 
 //urls_index is rendered, displays the urlDatabase object, displays the username if entered via cookie
 app.get("/urls", (req, res) => {
-  console.log(req.session.user_id)
+  //console.log(req.session.user_id)
   if (!req.session.user_id) {
     return res.status(403).send("no userID in get/urls")
   }
   const user = users[req.session.user_id]
-  console.log(user + "here")
+  ///console.log(user + "here")
   if (user === null) {
     return res.status(403).send("no user in get/urls")
   }
