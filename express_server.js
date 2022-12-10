@@ -171,7 +171,7 @@ app.post("/urls", (req, res) => {
   let id = ranNum();
 
   urlDatabase[id] = { longURL: newLong, user };
-  return res.redirect(`/urls`);
+  return res.redirect('/urls');
 });
 
 //reassigns id to imputed url
@@ -215,7 +215,7 @@ app.get("/urls/:id", (req, res) => {
     return res.status(403).send("User not logged in urls/:id");
   }
   let userInput = req.params.id;
-  const templateVars = { id:userInput, longURL:urlDatabase[userInput], user};
+  const templateVars = { id:userInput, longURL:urlDatabase[userInput].longURL, user};
   res.render("urls_show", templateVars);
 });
 
