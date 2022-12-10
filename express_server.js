@@ -78,9 +78,9 @@ app.post('/registration', (req, res) => {
 
 //renders login page
 app.get('/login', (req, res) => {
-  const user = users[req.session.user_id]
+  const user = users[req.session.user_id];
   if (req.session.user_id) {
-    res.redirect('/urls')
+    res.redirect('/urls');
   } else {
     const templateVars = {user: user};
     res.render("urls_login", templateVars);
@@ -91,27 +91,27 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   //in case of login check if email and password not empty, then check if user object is NOT undefined if !user show error,
   if(req.body.email === "" || req.body.password === "") {
-    return res.status(400).send("email or password is empty")
+    return res.status(400).send("email or password is empty");
   }
-  const enteredPassword = req.body.password 
-  const enteredEmail = req.body.email
+  const enteredPassword = req.body.password;
+  const enteredEmail = req.body.email;
   const user = getUserByEmail(enteredEmail, users); //gets users id from entered email compare to users object
   //console.log('user', user)
   const passwordCheck = bcrypt.compareSync(enteredPassword, users[user].password);
   // then check if password matches password stored.
   if (users[user].email === enteredEmail && passwordCheck) {
-    req.session.user_id = user
-    res.redirect('/urls')
+    req.session.user_id = user;
+    res.redirect('/urls');
   } else {
-    return res.status(403).send("User not found in post/login")
+    return res.status(403).send("User not found in post/login");
   }
 })
 
 //allows logout and removes cookie
 app.post('/logout', (req, res) => {
   //clear the user cookie in this route
-  req.session = null
-  res.redirect('/login')
+  req.session = null;
+  res.redirect('/login');
 })
 
 //root page says hello
@@ -133,15 +133,15 @@ app.get("/urls.json", (req, res) => {
 app.get("/urls", (req, res) => {
   //checks if user is logged in
   if (!req.session.user_id) {
-    return res.status(403).send("The user is not logged in")
+    return res.status(403).send("The user is not logged in");
   }
   //checks if user exists
   const user = users[req.session.user_id]
   if (!user) {
-    return res.status(403).send("no such user")
+    return res.status(403).send("no such user");
   }
   //displays urls in urldatabase of user
-  const urls = urlsForUser(urlDatabase, user.id)
+  const urls = urlsForUser(urlDatabase, user.id);
   const templateVars = {urls, user};
   return res.render("urls_index", templateVars);
 })
@@ -161,12 +161,12 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls", (req, res) => {
   //checks if user is logged in 
   if (!req.session.user_id) {
-    return res.status(403).send("no such userID")
+    return res.status(403).send("no such userID");
   }
   //checks if user is logged in
   const user = users[req.session.user_id]
   if (!user) {
-    return res.status(403).send("User is not logged in")
+    return res.status(403).send("User is not logged in");
   }
   let newLong = req.body.longURL;
   let id = ranNum();
@@ -183,14 +183,13 @@ app.post("/urls/:myid", (req, res) => {
   //reassign id to new inputed url
   let newURL = req.body;
   if (!req.session.user_id) {
-    return res.status(403).send("ID does not exist in myid")
+    return res.status(403).send("ID does not exist in myid");
   }
   const user = users[req.session.user_id]
   if (!user) {
-    return res.status(403).send("User not logged in myid")
+    return res.status(403).send("User not logged in myid");
   }
-  //.log(urlDatabase[id])
-  urlDatabase[id].longURL = newURL["longURL"]
+  urlDatabase[id].longURL = newURL["longURL"];
   res.redirect('/urls');
 });
 
@@ -198,11 +197,11 @@ app.post("/urls/:myid", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   let id = req.params.id;
   if (!req.session.user_id) {
-    return res.status(403).send("ID does not exist in id/delete")
+    return res.status(403).send("ID does not exist in id/delete");
   }
-  const user = users[req.session.user_id]
+  const user = users[req.session.user_id];
   if (!user) {
-    return res.status(403).send("User not logged in id/delete")
+    return res.status(403).send("User not logged in id/delete");
   }
   delete urlDatabase[id];
   res.redirect('/urls');
@@ -211,11 +210,11 @@ app.post("/urls/:id/delete", (req, res) => {
 //Find longURL assign variable to req.params and then use urlDatabase to get key userInput
 app.get("/urls/:id", (req, res) => {
   if (!req.session.user_id) {
-    return res.status(403).send("ID does not exist in urls/:id")
+    return res.status(403).send("ID does not exist in urls/:id");
   }
-  const user = users[req.session.user_id]
+  const user = users[req.session.user_id];
   if (!user) {
-    return res.status(403).send("User not logged in urls/:id")
+    return res.status(403).send("User not logged in urls/:id");
   }
   let userInput = req.params.id;
   const templateVars = { id:userInput, longURL:urlDatabase[userInput], user};
@@ -225,7 +224,7 @@ app.get("/urls/:id", (req, res) => {
 //can now click on short url to take you to long url.
 app.get("/u/:id", (req, res) => {
   let userInput = req.params.id;
-  const longURL = urlDatabase[userInput]
+  const longURL = urlDatabase[userInput];
   if (!longURL) {
     res.status(403).send("no long url in u/:id")
   } else {
