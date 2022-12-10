@@ -96,7 +96,6 @@ app.post('/login', (req, res) => {
   const enteredPassword = req.body.password;
   const enteredEmail = req.body.email;
   const user = getUserByEmail(enteredEmail, users); //gets users id from entered email compare to users object
-  //console.log('user', user)
   const passwordCheck = bcrypt.compareSync(enteredPassword, users[user].password);
   // then check if password matches password stored.
   if (users[user].email === enteredEmail && passwordCheck) {
@@ -172,7 +171,6 @@ app.post("/urls", (req, res) => {
   let id = ranNum();
 
   urlDatabase[id] = { longURL: newLong, user };
-  //console.log(urlDatabase)
   return res.redirect(`/urls`);
 });
 
@@ -224,7 +222,8 @@ app.get("/urls/:id", (req, res) => {
 //can now click on short url to take you to long url.
 app.get("/u/:id", (req, res) => {
   let userInput = req.params.id;
-  const longURL = urlDatabase[userInput];
+  const longURL = urlDatabase[userInput].longURL;
+  console.log(longURL)
   if (!longURL) {
     res.status(403).send("no long url in u/:id")
   } else {
