@@ -1,14 +1,13 @@
 //returns users object based on submitted email
 const getUserByEmail = function (email, users) {
   for (let user in users) {
-    console.log(user)
+    
     if (users[user].email === email) {
-      return users[user];
+      return user;
     }
   }
-  
+  return null
 }
-
 
 
 const urlsForUser = function (urlDatabase, userID) {
@@ -16,7 +15,7 @@ const urlsForUser = function (urlDatabase, userID) {
   for (const url in urlDatabase) {
     if (urlDatabase[url].userID === userID) {
       result[url] = urlDatabase[url]
-    }//le.log(urlDatabase[url].userID)
+    }
   }
   return result;
 }
