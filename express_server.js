@@ -169,7 +169,9 @@ app.post("/urls", (req, res) => {
   }
   let newLong = req.body.longURL;
   let id = ranNum();
-
+  if (!newLong) {
+    return res.status(403).send("No long URL entered");
+  }
   urlDatabase[id] = { longURL: newLong, user };
   return res.redirect(`/urls/${id}`);
 });
@@ -180,12 +182,16 @@ app.post("/urls/:myid", (req, res) => {
   let id = req.params.myid;
   //reassign id to new inputed url
   let newURL = req.body;
+  console.log(newURL)
   if (!req.session.user_id) {
     return res.status(403).send("ID does not exist in myid");
   }
   const user = users[req.session.user_id]
   if (!user) {
     return res.status(403).send("User not logged in myid");
+  }
+  if (newURL.longURL === "") {
+    return res.status(403).send("No long URL entered urls/:myid")
   }
   urlDatabase[id].longURL = newURL["longURL"];
   res.redirect('/urls');
