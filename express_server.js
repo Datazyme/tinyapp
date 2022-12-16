@@ -226,7 +226,11 @@ app.get("/urls/:id", (req, res) => {
   if(!urls[userInput]) {
     return res.status(403).send("URL does not belong to you in urls/:id");
   }
-  
+
+  const longURL = urlDatabase[userInput].longURL;
+  if (!longURL) {
+    return res.status(403).send("no long url in urls/:id")
+  }
   const templateVars = { id:userInput, longURL:urlDatabase[userInput].longURL, user};
   res.render("urls_show", templateVars);
 });
