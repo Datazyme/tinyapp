@@ -171,7 +171,7 @@ app.post("/urls", (req, res) => {
   let id = ranNum();
 
   urlDatabase[id] = { longURL: newLong, user };
-  return res.redirect('/urls');
+  return res.redirect(`/urls/${id}`);
 });
 
 //reassigns id to imputed url
@@ -201,12 +201,19 @@ app.post("/urls/:id/delete", (req, res) => {
   if (!user) {
     return res.status(403).send("User not logged in id/delete");
   }
+  const urls = urlsForUser(urlDatabase, user.id);
+  
+  if(!urls[id]) {
+    return res.status(403).send("URL does not belong to you urls/:id/delete");
+  }
   delete urlDatabase[id];
   res.redirect('/urls');
 });
 
 //Find longURL assign variable to req.params and then use urlDatabase to get key userInput
+//also has form to edit url
 app.get("/urls/:id", (req, res) => {
+  let userInput = req.params.id;
   if (!req.session.user_id) {
     return res.status(403).send("ID does not exist in urls/:id");
   }
@@ -214,7 +221,12 @@ app.get("/urls/:id", (req, res) => {
   if (!user) {
     return res.status(403).send("User not logged in urls/:id");
   }
-  let userInput = req.params.id;
+  const urls = urlsForUser(urlDatabase, user.id);
+  
+  if(!urls[userInput]) {
+    return res.status(403).send("URL does not belong to you in urls/:id");
+  }
+  
   const templateVars = { id:userInput, longURL:urlDatabase[userInput].longURL, user};
   res.render("urls_show", templateVars);
 });
