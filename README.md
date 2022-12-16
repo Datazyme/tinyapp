@@ -27,3 +27,5 @@ Run the development web server using `the npm start` command.
 !["Create TinyURL"](https://github.com/Datazyme/tinyapp/blob/master/docs/Create%20Tiny%20URL.png)
 
 !["My URL's"](https://github.com/Datazyme/tinyapp/blob/master/docs/My%20URLS.png)
+
+!["Edit urls's"](https://github.com/Datazyme/tinyapp/blob/master/docs/Edit%20urls.png)
