@@ -17,8 +17,8 @@ cookie-session
 
 
 # Getting Started
-Install all dependencies (using the npm install command).
-Run the development web server using the npm start command.
+Install all dependencies (using the `npm install` command).
+Run the development web server using `the npm start` command.
 
 # Final Product
 
